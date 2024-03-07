@@ -17,8 +17,12 @@ const studentSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    standard: {
+    password: {
         type: String,
+        required: true
+    },
+    standard: {
+        type: mongoose.Types.ObjectId,
         required: true
     }
 });

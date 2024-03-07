@@ -22,7 +22,28 @@ app.use(bodyParser.json());
 //read
 app.get('/students', async (req, res) => {
     try {
-        const students = await Student.find();
+        const students = await Student.aggregate([
+            {
+                $lookup: {
+                    from: "standardschemas",
+                    localField: "standard",
+                    foreignField: "_id",
+                    as: "standard"
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    firstName: 1,
+                    lastName: 1,
+                    age: 1,
+                    email: 1,
+                    standard: "$standard.standard"
+                }
+            },
+            {
+                $unwind: "$standard"
+            }]);;
         res.json(students);
     } catch (error) {
         console.error(error)
@@ -32,8 +53,11 @@ app.get('/students', async (req, res) => {
 
 //create
 app.post('/students', async (req, res) => {
-    const { studentId, firstName, lastName, age, email, standard } = req.body;
-    const newstudent = new Student({ studentId, firstName, lastName, age, email, standard });
+    const { studentId, firstName, lastName, age, email, password, standard } = req.body;
+
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const newstudent = new Student({ studentId, firstName, lastName, age, email, password: hashedPassword, standard });
 
     try {
         await newstudent.save();
@@ -49,7 +73,6 @@ app.put('/students/:id', async (req, res) => {
     const studentId = req.params.id;
     const { firstName, lastName, age, email, standard } = req.body;
     try {
-        const student = await Student.findByIdAndUpdate(studentId);
         if (!student) {
             return res.status(404).json({ error: 'student not found' });
         }
@@ -105,13 +128,6 @@ app.post('/students/signup', async (req, res) => {
         if (existingStudent) {
             return res.status(400).json({ message: 'Student Alredy Exist' });
         }
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltRounds)
-
-        const newStudent = new StudentSignup({ email, password: hashedPassword });
-        console.log(hashedPassword, 'pass');
-        await newStudent.save();
-
         res.status(201).json({ message: 'Student Created Successfully' });
     } catch (error) {
         console.log(error);
@@ -150,8 +166,32 @@ app.post('/students/login', async (req, res) => {
 //read
 app.get('/teachers', async (req, res) => {
     try {
-        const teachers = await Teachers.find();
-        res.json(teachers)
+        const teachers = await Teachers.aggregate([
+            {
+                $lookup:
+                {
+                    from: "standardschemas",
+                    localField: "standard",
+                    foreignField: "_id",
+                    as: "standard"
+                }
+            },
+            {
+                $project:
+                {
+                    _id: 1,
+                    firstName: 1,
+                    lastName: 1,
+                    age: 1,
+                    email: 1,
+                    standard: "$standard.standard"
+                }
+            },
+            {
+                $unwind: "$standard"
+            }
+        ]);
+        res.json(teachers);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -161,8 +201,10 @@ app.get('/teachers', async (req, res) => {
 //create
 app.post('/teachers', async (req, res) => {
     try {
-        const { teachersId, firstName, lastName, age, email, standard } = req.body
-        const newTeachers = new Teachers({ teachersId, firstName, lastName, age, email, standard });
+        const { teachersId, firstName, lastName, age, email, password, standard } = req.body
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        const newTeachers = new Teachers({ teachersId, firstName, lastName, age, email, password: hashedPassword, standard });
         await newTeachers.save();
         res.status(201).json(newTeachers);
     } catch (error) {
@@ -225,11 +267,100 @@ app.delete("/teachers/:id", async (req, res) => {
 })
 
 //standrd
+//readbystandard
+
+app.get('/standards', async (req, res) => {
+    try {
+        const standard = await Standard.find()
+        res.json(standard)
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+
 //read
 app.get('/standard', async (req, res) => {
     try {
-        const standard = await Standard.find();
+        const standard = await Standard.aggregate([
+            {
+                $lookup:
+                {
+                    from: "studentschemas",
+                    localField: "_id",
+                    foreignField: "standard",
+                    as: "students"
+                }
+            },
+            {
+                $lookup:
+                {
+                    from: "teachersschemas",
+                    localField: "_id",
+                    foreignField: "standard",
+                    as: "teachers"
+                }
+            },
+            {
+                $project:
+                {
+                    _id: "$standard",
+                    students: 1,
+                    teachers: 1,
+                    studentscount: { $size: "$students" },
+                    teacherscount: { $size: "$teachers" }
+                }
+            }
+        ]);
         res.json(standard)
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+
+
+//read standard
+app.get('/standard/:id', async (req, res) => {
+    const studentStandard = Number(req.params.id);
+    console.log(typeof (studentStandard));
+    try {
+        const standard = await Standard.aggregate([
+            {
+                $match: {
+                    standard: studentStandard
+                }
+            },
+            {
+                $lookup:
+                {
+                    from: "studentschemas",
+                    localField: "_id",
+                    foreignField: "standard",
+                    as: "students"
+                }
+            },
+            {
+                $lookup:
+                {
+                    from: "teachersschemas",
+                    localField: "_id",
+                    foreignField: "standard",
+                    as: "teachers"
+                }
+            },
+            {
+                $project:
+                {
+                    _id: "$standard",
+                    students: 1,
+                    teachers: 1
+                }
+            }
+        ]);
+        res.json(standard[0])
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal Server Error' });
