@@ -119,42 +119,22 @@ app.delete("/students/:id", async (req, res) => {
     }
 });
 
-//signup
-app.post('/students/signup', async (req, res) => {
-    try {
-        const { email, password } = req.body;
 
-        const existingStudent = await StudentSignup.findOne({ email });
-        if (existingStudent) {
-            return res.status(400).json({ message: 'Student Alredy Exist' });
-        }
-        res.status(201).json({ message: 'Student Created Successfully' });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: 'Internal Server Error' });
-    }
-});
 
 //login
-app.post('/students/login', async (req, res) => {
+app.post('/login', async (req, res) => {
     const { email, password } = req.body;
-
     try {
-        const user = await User.findOne({ email });
-
+        const user = await Teachers.findOne({ email });
         if (!user) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
-
         const isPasswordValid = await bcrypt.compare(password, user.password);
-
         if (!isPasswordValid) {
-            return res.status(401).json({ message: 'Invalid credentials' });
+            return res.status(401).json({ message: 'Invalid Password' });
         }
-
         const token = jwt.sign({ email: user.email }, '987654');
-
-        res.json({ token });
+        res.json({ token, user });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
@@ -430,6 +410,21 @@ app.delete("/standard/:id", async (req, res) => {
 })
 
 
+//signup
+app.post('/students/signup', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        const existingStudent = await StudentSignup.findOne({ email });
+        if (existingStudent) {
+            return res.status(400).json({ message: 'Student Alredy Exist' });
+        }
+        res.status(201).json({ message: 'Student Created Successfully' });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
