@@ -134,7 +134,7 @@ app.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Invalid Password' });
         }
         const token = jwt.sign({ email: user.email }, '987654');
-        res.json({ token, user });
+        res.json({ token });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
