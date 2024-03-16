@@ -9,6 +9,7 @@ const User = require('./modules/user');
 const bcrypt = require('bcrypt');
 const Teachers = require('./teachersmodules/teachers');
 const Standard = require('./modules/standardmodule/standardmodule');
+const StudentDetails = require('./modules/standardmodule/standardmodule');
 
 const app = express();
 app.use(bodyParser.json());
@@ -410,21 +411,29 @@ app.delete("/standard/:id", async (req, res) => {
 })
 
 
-//signup
-app.post('/students/signup', async (req, res) => {
+//studentDetails
+app.get('/studentdetails', async (req, res) => {
     try {
-        const { email, password } = req.body;
-
-        const existingStudent = await StudentSignup.findOne({ email });
-        if (existingStudent) {
-            return res.status(400).json({ message: 'Student Alredy Exist' });
-        }
-        res.status(201).json({ message: 'Student Created Successfully' });
+        const newStudentDetails = await StudentDetails.find();
+        res.status(200).json(newStudentDetails)
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: 'Internal Server Error' });
+        res.status(500).json("Internal Server Error");
     }
-});
+})
+
+//createstudentdetails
+app.post('/studentdetails', async (req, res) => {
+    const studentDetailsData = req.body;
+    const newStudentDetails = new StudentDetails(studentDetailsData);
+    try {
+        await newStudentDetails.save();
+        res.status(201).json(newStudentDetails);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json("Internal Server Error");
+    }
+})
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
