@@ -3,13 +3,12 @@ const express = require('express');
 require('./db')
 const bodyParser = require('body-parser');
 const Student = require('./modules/student');
-const StudentSignup = require('./modules/accountcreation');
 const jwt = require('jsonwebtoken');
 const User = require('./modules/user');
 const bcrypt = require('bcrypt');
 const Teachers = require('./teachersmodules/teachers');
 const Standard = require('./modules/standardmodule/standardmodule');
-const StudentDetails = require('./modules/standardmodule/standardmodule');
+const StudentDetails = require('./modules/studentmodules');
 
 const app = express();
 app.use(bodyParser.json());

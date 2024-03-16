@@ -6,7 +6,7 @@ const studentDetailsSchema = mongoose.Schema({
         type: String
     },
     studentAddress: {
-        type: String
+        type: Array
     },
     phoneNumber: {
         type: Number
