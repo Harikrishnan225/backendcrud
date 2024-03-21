@@ -73,6 +73,7 @@ app.put('/students/:id', async (req, res) => {
     const studentId = req.params.id;
     const { firstName, lastName, age, email, standard } = req.body;
     try {
+        const student = await Student.findByIdAndUpdate(studentId);
         if (!student) {
             return res.status(404).json({ error: 'student not found' });
         }
@@ -84,7 +85,7 @@ app.put('/students/:id', async (req, res) => {
         await student.save();
         res.json(student);
     } catch (error) {
-        console.error(error)
+        console.error(error.message)
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
@@ -196,9 +197,9 @@ app.post('/teachers', async (req, res) => {
 //update
 
 app.put('/teachers/:id', async (req, res) => {
-    const teachersId = req.params.id;
     const { firstName, lastName, age, email, standard } = req.body;
     try {
+        const teachersId = req.params.id;
         const teacher = await Teachers.findByIdAndUpdate(teachersId);
         if (!teacher) {
             return res.status(404).json({ error: 'teacher not found' });
@@ -228,7 +229,7 @@ app.get("/teachers/:id", async (req, res) => {
     } catch (error) {
         res.status(500).json('Internal Server Error');
     }
-})
+});
 
 //teacherDelete
 
@@ -244,7 +245,7 @@ app.delete("/teachers/:id", async (req, res) => {
         console.log(error);
         res.status(500).json('Internal server error')
     }
-})
+});
 
 //standrd
 //readbystandard
@@ -391,7 +392,7 @@ app.get("/standard/:id", async (req, res) => {
     } catch (error) {
         res.status(500).json('Internal Server Error');
     }
-})
+});
 
 //standardDelete
 
@@ -407,22 +408,25 @@ app.delete("/standard/:id", async (req, res) => {
         console.log(error);
         res.status(500).json('Internal server error')
     }
-})
+});
 
 
 //studentDetails
-app.get('/studentdetails', async (req, res) => {
+app.get("/studentdetails", async (req, res) => {
     try {
         const newStudentDetails = await StudentDetails.find();
-        res.status(200).json(newStudentDetails)
+        if (newStudentDetails) {
+            res.status(404).json("No Studentdetails Found");
+        }
+        res.status(200).json(newStudentDetails);
     } catch (error) {
         console.log(error);
         res.status(500).json("Internal Server Error");
     }
-})
+});
 
 //createstudentdetails
-app.post('/studentdetails', async (req, res) => {
+app.post("/studentdetails", async (req, res) => {
     const studentDetailsData = req.body;
     const newStudentDetails = new StudentDetails(studentDetailsData);
     try {
@@ -432,7 +436,55 @@ app.post('/studentdetails', async (req, res) => {
         console.log(error);
         res.status(500).json("Internal Server Error");
     }
-})
+});
+
+//editstudentdetails
+app.put("/studentdetails/:id", async (req, res) => {
+    const studentDetailsId = req.params.id;
+    const { studentName, studentAddress } = req.body;
+    try {
+        const studentDetails = await StudentDetails.findByIdAndUpdate(studentDetailsId, { studentName, studentAddress });
+        if (!studentDetails) {
+            return res.status(304).json("Student Details Not Modified");
+        }
+        res.status(200).json("Student Details Updated Successfully");
+    } catch (error) {
+        console.log(error);
+        res.status(500).json("Internal Server Error");
+    }
+});
+
+//getByParticularId
+app.get("/studentdetails/:id", async (req, res) => {
+    const studentDetailsId = req.params.id;
+    try {
+        const studentDataById = await StudentDetails.findById(studentDetailsId);
+        if (!studentDataById) {
+            return res.status(404).json("Student is not Found");
+        }
+        res.status(200).json(studentDataById);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json("Internal Server Error");
+    }
+});
+
+//deletestudentdetails
+app.delete("/studentdetails/:id", async (req, res) => {
+    const deleteStudentId = req.params.id;
+    try {
+        const deletedStudentDetails = await StudentDetails.findByIdAndDelete(deleteStudentId);
+        if (!deletedStudentDetails) {
+            res.status(404).json("StudentDetails NotFound");
+        }
+        res.status(202).json("StudentDetails Deleted Successfully");
+    } catch (error) {
+        console.log(error);
+        res.status(500).json("Internal Server Error");
+    }
+});
+
+
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
